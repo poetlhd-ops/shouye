@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Template Editor App - Carousel Prototype</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050505;
+      color: #fff;
+    }
+
+    body {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px;
+      overflow-x: hidden;
+    }
+
+    .stage {
+      position: relative;
+      width: 430px;
+      min-height: 1480px;
+      border-radius: 40px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(98, 77, 255, 0.34), transparent 28%),
+        radial-gradient(circle at 87% 34%, rgba(43, 219, 133, 0.20), transparent 26%),
+        radial-gradient(circle at 76% 92%, rgba(146, 85, 255, 0.18), transparent 28%),
+        linear-gradient(180deg, #080808 0%, #0b0b0d 50%, #050505 100%);
+      box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.55),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px);
+      background-size: 3px 3px, 3px 3px;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      padding: 22px 22px 28px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      opacity: 0.9;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .dynamic-island {
+      width: 122px;
+      height: 34px;
+      border-radius: 999px;
+      background: #0f0f11;
+      margin: 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px 8px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 40% 28%, #ffd6b1 0 26%, transparent 27%),
+        radial-gradient(circle at 39% 30%, #2c2c34 0 14%, transparent 15%),
+        radial-gradient(circle at 51% 76%, #1c1f26 0 28%, transparent 29%),
+        linear-gradient(180deg, #514c55 0%, #28262a 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    .user-name {
+      font-size: 13px;
+      color: rgba(255,255,255,0.92);
+      font-weight: 600;
+    }
+
+    .search-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,0.92);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .eyebrow {
+      margin-top: 30px;
+      color: rgba(255,255,255,0.70);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .headline {
+      margin-top: 10px;
+      font-size: 54px;
+      line-height: 0.96;
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      max-width: 290px;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .chips {
+      display: flex;
+      gap: 10px;
+      overflow: hidden;
+      margin-top: 26px;
+      padding-bottom: 2px;
+    }
+
+    .chip {
+      white-space: nowrap;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.88);
+      font-size: 14px;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+
+    .chip.active {
+      background: #ffffff;
+      color: #111111;
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(255,255,255,0.12);
+    }
+
+    .carousel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 26px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.94);
+      letter-spacing: -0.02em;
+    }
+
+    .switchers {
+      display: flex;
+      gap: 10px;
+    }
+
+    .switch-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      user-select: none;
+      font-size: 18px;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .switch-btn:active {
+      transform: scale(0.96);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .cards-zone {
+      position: relative;
+      height: 380px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .stack-card {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: 312px;
+      height: 350px;
+      transform-origin: center center;
+      border-radius: 28px;
+      overflow: hidden;
+      transition: transform .36s ease, opacity .36s ease, filter .36s ease, box-shadow .36s ease;
+      box-shadow: 0 28px 44px rgba(0,0,0,0.18);
+    }
+
+    .stack-card[data-pos="-1"] {
+      transform: translateX(-178px) rotate(-7deg) scale(0.92);
+      z-index: 1;
+      opacity: 0.88;
+      filter: saturate(0.92);
+    }
+
+    .stack-card[data-pos="0"] {
+      transform: translateX(-50%) rotate(0deg) scale(1);
+      z-index: 3;
+      opacity: 1;
+      box-shadow: 0 36px 56px rgba(0,0,0,0.24);
+    }
+
+    .stack-card[data-pos="1"] {
+      transform: translateX(58px) rotate(7deg) scale(0.92);
+      z-index: 2;
+      opacity: 0.88;
+      filter: saturate(0.94);
+    }
+
+    .stack-card[data-hide="true"] {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) scale(0.84);
+      z-index: 0;
+    }
+
+    .card-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    .shadow-floor {
+      position: absolute;
+      left: 50%;
+      bottom: -4px;
+      width: 280px;
+      height: 50px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.02) 70%, transparent 100%);
+      filter: blur(12px);
+      z-index: 0;
+    }
+
+    .card-one {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(248,247,244,0.96)),
+        #f1efea;
+      border: 1px solid rgba(255,255,255,0.68);
+    }
+
+    .card-one::before {
+      content: "";
+      position: absolute;
+      inset: 16px 16px 16px 16px;
+      border-radius: 24px;
+      background:
+        linear-gradient(90deg, transparent 0 78%, rgba(211, 234, 255, 0.18) 78% 100%),
+        linear-gradient(180deg, #f7f7f7 0%, #f1f1f1 100%);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+    }
+
+    .card-one .portrait-cut {
+      position: absolute;
+      left: 22px;
+      bottom: 0;
+      width: 114px;
+      height: 160px;
+      border-radius: 20px 20px 0 0;
+      background:
+        radial-gradient(circle at 55% 20%, #e3bca4 0 14%, transparent 15%),
+        linear-gradient(180deg, #202229 0 45%, #0d0f14 45% 100%);
+      overflow: hidden;
+    }
+
+    .card-one .portrait-cut::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 46px;
+      width: 58px;
+      height: 90px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #fafafa, #e9e9e9);
+      clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
+      border-radius: 14px;
+    }
+
+    .card-one .scribble {
+      position: absolute;
+      left: 48px;
+      top: 84px;
+      width: 170px;
+      height: 140px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.06);
+      transform: rotate(16deg);
+    }
+
+    .card-two {
+      background:
+        radial-gradient(circle at 22% 12%, rgba(255,255,255,0.28), transparent 28%),
+        linear-gradient(180deg, #4b79a5 0%, #3d6991 100%);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .card-two .inner {
+      position: absolute;
+      inset: 16px;
+      border-radius: 22px;
+      background: #f5f5f5;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .card-two .inner::before,
+    .card-two .inner::after {
+      content: "";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      width: 4px;
+      background: rgba(0,0,0,0.08);
+    }
+
+    .card-two .inner::before { left: 34%; }
+    .card-two .inner::after { right: 34%; }
+
+    .card-two .art {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(0,0,0,0.26), transparent 18%),
+        radial-gradient(circle at 78% 28%, rgba(0,0,0,0.18), transparent 22%),
+        radial-gradient(circle at 54% 56%, rgba(0,0,0,0.16), transparent 26%),
+        linear-gradient(180deg, rgba(0,0,0,0.38), rgba(0,0,0,0.26));
+      mix-blend-mode: multiply;
+      opacity: 0.42;
+    }
+
+    .card-three {
+      background:
+        linear-gradient(180deg, #efcf9b 0%, #e4c087 100%);
+      border: 1px solid rgba(255,255,255,0.26);
+    }
+
+    .card-three .paper-noise {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(rgba(0,0,0,0.05) 0.6px, transparent 0.8px),
+        radial-gradient(rgba(255,255,255,0.10) 0.5px, transparent 0.8px);
+      background-size: 5px 5px, 7px 7px;
+      opacity: 0.35;
+    }
+
+    .card-three .frame-line {
+      position: absolute;
+      inset: 18px;
+      border-radius: 24px;
+      border: 2px solid rgba(45, 122, 98, 0.55);
+    }
+
+    .card-three .frame-line::before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 14px;
+      height: 2px;
+      background: rgba(255,255,255,0.65);
+    }
+
+    .card-three .dot {
+      position: absolute;
+      right: 54px;
+      top: 18px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(45, 122, 98, 0.95);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+    }
+
+    .card-three .mini-photo {
+      position: absolute;
+      right: 34px;
+      top: 80px;
+      width: 94px;
+      height: 126px;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 52% 30%, rgba(255,198,128,0.8), transparent 14%),
+        linear-gradient(180deg, #5a6b2d 0%, #253316 100%);
+      overflow: hidden;
+    }
+
+    .card-three .mini-photo::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 34px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.22));
+    }
+
+    .card-four {
+      background:
+        linear-gradient(180deg, #f6f2ef 0%, #ece8e4 100%);
+      border: 1px solid rgba(255,255,255,0.72);
+    }
+
+    .film-top,
+    .film-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,0.95) 0 12px,
+          rgba(229,227,222,0.95) 12px 22px
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(177, 138, 96, 0.82);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      overflow: hidden;
+    }
+
+    .film-top {
+      top: 128px;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .film-bottom {
+      bottom: 20px;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .film-top::before,
+    .film-bottom::before {
+      content: "";
+      position: absolute;
+      inset: 8px 0;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 10px,
+          rgba(255,255,255,0.86) 10px 20px
+        );
+      opacity: 0.9;
+    }
+
+    .film-grid-top {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 18px;
+      height: 102px;
+      display: grid;
+      grid-template-columns: 0.68fr 1.32fr;
+      gap: 6px;
+    }
+
+    .film-grid-bottom {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      top: 186px;
+      bottom: 58px;
+      display: grid;
+      grid-template-columns: 1fr 2.1fr 1fr;
+      gap: 6px;
+    }
+
+    .photo-cell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.26), transparent 24%),
+        linear-gradient(180deg, #939393 0%, #6b6b6b 100%);
+      filter: grayscale(1);
+    }
+
+    .photo-cell.plant {
+      background:
+        radial-gradient(circle at 46% 58%, rgba(255,255,255,0.24), transparent 14%),
+        radial-gradient(circle at 26% 40%, rgba(0,0,0,0.30), transparent 20%),
+        radial-gradient(circle at 70% 30%, rgba(0,0,0,0.22), transparent 18%),
+        linear-gradient(180deg, #8d8d8d 0%, #5e5e5e 100%);
+    }
+
+    .photo-cell.car {
+      background:
+        radial-gradient(circle at 50% 76%, rgba(18,18,18,0.66), transparent 12%),
+        radial-gradient(circle at 22% 76%, rgba(18,18,18,0.60), transparent 10%),
+        radial-gradient(circle at 78% 76%, rgba(18,18,18,0.60), transparent 10%),
+        linear-gradient(180deg, #e4e4e4 0%, #cccccc 100%);
+    }
+
+    .photo-cell.car::before {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      bottom: 18%;
+      height: 26%;
+      background: rgba(245,245,245,0.96);
+      clip-path: polygon(14% 26%, 84% 14%, 96% 54%, 88% 74%, 16% 80%, 2% 54%);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .photo-cell.car::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.16), transparent 36%),
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.20), transparent 30%);
+    }
+
+    .ig-badge {
+      position: absolute;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      width: 192px;
+      height: 66px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: #fff;
+      font-size: 23px;
+      font-weight: 700;
+      background:
+        linear-gradient(180deg, rgba(96,96,96,0.78) 0%, rgba(37,37,37,0.90) 100%);
+      box-shadow:
+        0 16px 28px rgba(0,0,0,0.22),
+        inset 0 1px 0 rgba(255,255,255,0.18);
+      backdrop-filter: blur(16px);
+      z-index: 5;
+    }
+
+    .ig-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 2.4px solid rgba(255,255,255,0.94);
+      position: relative;
+    }
+
+    .ig-icon::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2.4px solid rgba(255,255,255,0.94);
+      transform: translate(-50%, -50%);
+    }
+
+    .ig-icon::after {
+      content: "";
+      position: absolute;
+      right: 7px;
+      top: 7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.94);
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    .dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      transition: transform .2s ease, background .2s ease;
+    }
+
+    .dot-indicator.active {
+      width: 24px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.82);
+    }
+
+    .feed-section {
+      margin-top: 22px;
+      padding-bottom: 120px;
+    }
+
+    .feed-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      margin-bottom: 18px;
+    }
+
+    .feed-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.98);
+      letter-spacing: -0.03em;
+    }
+
+    .see-all {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: rgba(255,255,255,0.96);
+      background: rgba(255,255,255,0.02);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      backdrop-filter: blur(8px);
+    }
+
+    .masonry {
+      column-count: 2;
+      column-gap: 16px;
+    }
+
+    .feed-item {
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+      margin-bottom: 24px;
+    }
+
+    .feed-cover {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      background: #1b1b1d;
+      border: 1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.18);
+      margin-bottom: 10px;
+    }
+
+    .feed-cover.h520 { height: 520px; }
+    .feed-cover.h420 { height: 420px; }
+    .feed-cover.h440 { height: 440px; }
+    .feed-cover.h390 { height: 390px; }
+
+    .feed-name {
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: rgba(255,255,255,0.96);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .feed-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255,255,255,0.84);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .meta-icon {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      border: 1.4px solid rgba(255,255,255,0.88);
+      position: relative;
+      opacity: 0.9;
+    }
+
+    .meta-icon.photo::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      bottom: 2px;
+      height: 5px;
+      background: rgba(255,255,255,0.88);
+      clip-path: polygon(0 100%, 35% 32%, 60% 62%, 80% 44%, 100% 100%);
+      border-radius: 1px;
+    }
+
+    .meta-icon.photo::after {
+      content: "";
+      position: absolute;
+      right: 2px;
+      top: 2px;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.88);
+    }
+
+    .meta-icon.layers::before,
+    .meta-icon.layers::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 2px;
+      border: 1.2px solid rgba(255,255,255,0.88);
+    }
+
+    .meta-icon.layers::before {
+      transform: translate(-3px, 3px);
+      opacity: 0.7;
+    }
+
+    .cover-polaroid {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #b7d4df 0%, #5d6866 38%, #1d1a15 100%);
+    }
+
+    .cover-polaroid::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), transparent 24%),
+        radial-gradient(circle at 26% 18%, rgba(255,255,255,0.16), transparent 20%);
+    }
+
+    .p-frame {
+      position: absolute;
+      background: #f7f4ee;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    }
+
+    .p1 {
+      width: 150px;
+      height: 180px;
+      left: 116px;
+      top: 30px;
+      transform: rotate(9deg);
+      padding: 10px 10px 28px;
+    }
+
+    .p2 {
+      width: 132px;
+      height: 170px;
+      left: 36px;
+      top: 216px;
+      transform: rotate(-17deg);
+      padding: 10px 10px 28px;
+    }
+
+    .p3 {
+      width: 146px;
+      height: 186px;
+      right: 30px;
+      top: 206px;
+      transform: rotate(9deg);
+      padding: 10px 10px 28px;
+    }
+
+    .p4 {
+      width: 142px;
+      height: 180px;
+      left: 128px;
+      bottom: 28px;
+      transform: rotate(-8deg);
+      padding: 10px 10px 28px;
+      background: #151515;
+    }
+
+    .p-photo {
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 60% 18%, rgba(255,255,255,0.16), transparent 12%),
+        linear-gradient(180deg, #8ab0c5 0%, #52616a 100%);
+    }
+
+    .p-photo.person {
+      background:
+        radial-gradient(circle at 55% 24%, rgba(239,202,180,0.88) 0 10%, transparent 11%),
+        linear-gradient(180deg, #6d6a67 0%, #1f2024 44%, #3c332f 100%);
+    }
+
+    .p-tape {
+      position: absolute;
+      width: 26px;
+      height: 14px;
+      background: rgba(229, 204, 149, 0.82);
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-12deg);
+      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    }
+
+    .hand-note {
+      position: absolute;
+      left: 26px;
+      top: 58px;
+      color: rgba(255,255,255,0.96);
+      font-size: 26px;
+      line-height: 1.05;
+      font-family: "Brush Script MT", "Segoe Script", cursive;
+      transform: rotate(-10deg);
+      text-shadow: 0 4px 10px rgba(0,0,0,0.18);
+    }
+
+    .cover-ripped {
+      position: absolute;
+      inset: 0;
+      background: #e7edf0;
+    }
+
+    .rip-top, .rip-mid, .rip-bot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+    }
+
+    .rip-top {
+      top: 0;
+      height: 160px;
+      background:
+        linear-gradient(180deg, #b7c7d4 0%, #7ca0b4 100%);
+      clip-path: polygon(0 0,100% 0,100% 90%,92% 94%,84% 91%,76% 95%,68% 92%,60% 96%,52% 92%,44% 95%,36% 91%,28% 95%,20% 91%,12% 95%,0 91%);
+    }
+
+    .rip-mid {
+      top: 150px;
+      height: 150px;
+      background:
+        radial-gradient(circle at 55% 32%, rgba(247,214,202,0.95) 0 11%, transparent 12%),
+        linear-gradient(180deg, #dcd8d9 0%, #a9a4aa 100%);
+      clip-path: polygon(0 5%,10% 0,20% 4%,30% 1%,40% 5%,50% 2%,60% 6%,70% 3%,80% 7%,90% 2%,100% 6%,100% 94%,90% 98%,80% 92%,70% 97%,60% 93%,50% 98%,40% 94%,30% 99%,20% 94%,10% 98%,0 93%);
+    }
+
+    .rip-bot {
+      bottom: 0;
+      height: 150px;
+      background:
+        linear-gradient(180deg, #f1c79f 0%, #473b33 100%);
+      clip-path: polygon(0 6%,8% 1%,16% 7%,24% 2%,32% 6%,40% 1%,48% 5%,56% 0,64% 6%,72% 1%,80% 7%,88% 2%,96% 6%,100% 2%,100% 100%,0 100%);
+    }
+
+    .summer-text {
+      position: absolute;
+      right: 24px;
+      top: 118px;
+      color: #f0c33f;
+      font-size: 20px;
+      font-weight: 700;
+      font-family: "Brush Script MT", "Segoe Script", cursive;
+      transform: rotate(-4deg);
+    }
+
+    .cover-scrap {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #d7e2f0 0%, #8fb0c9 44%, #5b7fa1 100%);
+    }
+
+    .scrap-sea {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 40%;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02)),
+        linear-gradient(180deg, #5b7ca0 0%, #426382 100%);
+    }
+
+    .scrap-polaroid {
+      position: absolute;
+      width: 112px;
+      height: 128px;
+      background: #fbfaf7;
+      padding: 8px 8px 24px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+    }
+
+    .sp1 { left: 34px; top: 48px; }
+    .sp2 { right: 30px; top: 52px; }
+    .sp3 { left: 34px; bottom: 44px; }
+    .sp4 { right: 28px; bottom: 44px; }
+
+    .scrap-img {
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 62% 18%, rgba(255,255,255,0.16), transparent 14%),
+        linear-gradient(180deg, #d5d9dd 0%, #7d9fb6 100%);
+    }
+
+    .scrap-note {
+      position: absolute;
+      left: 132px;
+      top: 162px;
+      width: 96px;
+      height: 88px;
+      background: #f3e57b;
+      color: #3a2c12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 18px;
+      line-height: 1.1;
+      font-weight: 700;
+      transform: rotate(8deg);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      font-family: "Comic Sans MS", "Marker Felt", cursive;
+    }
+
+    .scrap-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+    }
+
+    .scrap-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.44);
+    }
+
+    .scrap-dots span:first-child {
+      background: rgba(255,255,255,0.96);
+    }
+
+    .cover-paper {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, #efe6dc 0%, #d6d2d0 36%, #6785a1 100%);
+    }
+
+    .paper-hole {
+      position: absolute;
+      left: 64px;
+      right: 64px;
+      top: 46px;
+      height: 120px;
+      background: rgba(246,246,244,0.92);
+      clip-path: polygon(7% 2%, 93% 0, 98% 14%, 96% 84%, 91% 98%, 8% 96%, 2% 86%, 0 16%);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+    }
+
+    .paper-hole::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      background:
+        linear-gradient(180deg, #d4edf6 0%, #b8dbe5 100%);
+    }
+
+    .summer-balls {
+      position: absolute;
+      left: 50%;
+      top: 186px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
+
+    .summer-balls span {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(245,245,245,0.90);
+      color: #2c2c2c;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+    }
+
+    .paper-couple {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 74%;
+      height: 42%;
+      transform: translateX(-50%);
+      background:
+        radial-gradient(circle at 38% 24%, rgba(240,199,170,0.88) 0 7%, transparent 8%),
+        radial-gradient(circle at 66% 24%, rgba(240,199,170,0.88) 0 7%, transparent 8%),
+        linear-gradient(180deg, rgba(99,109,117,0.18), rgba(84,96,104,0.72));
+      filter: blur(0.2px);
+      clip-path: polygon(22% 18%,30% 12%,36% 18%,40% 42%,46% 96%,22% 96%,16% 42%, 58% 18%,66% 12%,72% 18%,76% 42%,82% 96%,58% 96%,52% 42%);
+      opacity: 0.92;
+    }
+
+    @media (max-width: 520px) {
+      .masonry {
+        column-gap: 12px;
+      }
+      .feed-item {
+        margin-bottom: 20px;
+      }
+      .feed-name {
+        font-size: 16px;
+      }
+    }
+
+
+    .bottom-nav-wrap {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 20px;
+      z-index: 3;
+    }
+
+    .bottom-nav {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .nav-primary {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ffffff;
+      color: #111111;
+      font-size: 28px;
+      font-weight: 800;
+      box-shadow:
+        0 14px 28px rgba(0,0,0,0.28),
+        0 6px 18px rgba(255,255,255,0.08);
+      flex: 0 0 auto;
+    }
+
+    .nav-group {
+      flex: 1;
+      height: 74px;
+      padding: 8px 10px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px);
+      box-shadow:
+        0 16px 36px rgba(0,0,0,0.36),
+        inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    .nav-item {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,0.72);
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    .nav-item.active {
+      background: rgba(255,255,255,0.14);
+      color: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .hint {
+      position: fixed;
+      left: 20px;
+      bottom: 16px;
+      right: 20px;
+      max-width: 740px;
+      margin: auto;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(14,14,16,0.82);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.78);
+      font-size: 13px;
+      line-height: 1.5;
+      backdrop-filter: blur(14px);
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 12px; }
+      .stage {
+        width: 100%;
+        min-height: 860px;
+      }
+      .headline { font-size: 46px; }
+      .stack-card {
+        width: 286px;
+        height: 330px;
+      }
+      .stack-card[data-pos="-1"] {
+        transform: translateX(-164px) rotate(-7deg) scale(0.92);
+      }
+      .stack-card[data-pos="1"] {
+        transform: translateX(48px) rotate(7deg) scale(0.92);
+      }
+      .hint {
+        position: static;
+        margin-top: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="noise"></div>
+    <div class="content">
+      <div class="status-row">
+        <div>9:41</div>
+        <div class="dynamic-island"></div>
+        <div>◔◔◔</div>
+      </div>
+
+      <div class="topbar">
+        <div class="user-pill">
+          <div class="avatar"></div>
+          <div class="user-name">Noah Carter</div>
+        </div>
+        <div class="search-btn">⌕</div>
+      </div>
+
+      <div class="eyebrow">Create with Templates</div>
+      <div class="headline">Make Poster<br>In Seconds</div>
+
+      <div class="chips">
+        <div class="chip active">Player Style</div>
+        <div class="chip">Photo Card</div>
+        <div class="chip">Business Poster</div>
+        <div class="chip">Fashion</div>
+      </div>
+
+      <div class="carousel-head">
+        <div class="section-title">Trending Templates</div>
+        <div class="switchers">
+          <div class="switch-btn" id="prevBtn">‹</div>
+          <div class="switch-btn" id="nextBtn">›</div>
+        </div>
+      </div>
+
+      <div class="cards-zone" id="carousel">
+        <div class="shadow-floor"></div>
+
+        <div class="stack-card" data-index="0">
+          <div class="card-shell card-one">
+            <div class="scribble"></div>
+            <div class="portrait-cut"></div>
+          </div>
+        </div>
+
+        <div class="stack-card" data-index="1">
+          <div class="card-shell card-two">
+            <div class="inner">
+              <div class="art"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack-card" data-index="2">
+          <div class="card-shell card-three">
+            <div class="paper-noise"></div>
+            <div class="frame-line"></div>
+            <div class="dot"></div>
+            <div class="mini-photo"></div>
+          </div>
+        </div>
+
+        <div class="stack-card" data-index="3">
+          <div class="card-shell card-four">
+            <div class="film-grid-top">
+              <div class="photo-cell plant"></div>
+              <div class="photo-cell plant"></div>
+            </div>
+            <div class="film-top">20 &nbsp;&nbsp; ▷ 06B &nbsp;&nbsp; 19</div>
+
+            <div class="film-grid-bottom">
+              <div class="photo-cell car"></div>
+              <div class="photo-cell car"></div>
+              <div class="photo-cell car"></div>
+            </div>
+            <div class="film-bottom">26 &nbsp;&nbsp; ▷ 04B &nbsp;&nbsp; 27</div>
+
+            <div class="ig-badge">
+              <div class="ig-icon"></div>
+              <div>帖子</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dots" id="dots"></div>
+
+      
+      <div class="feed-section">
+        <div class="feed-head">
+          <div class="feed-title">Retro</div>
+          <div class="see-all">See All ›</div>
+        </div>
+
+        <div class="masonry">
+          <div class="feed-item">
+            <div class="feed-cover h520">
+              <div class="cover-polaroid">
+                <div class="hand-note">All about<br>today</div>
+
+                <div class="p-frame p1">
+                  <div class="p-photo"></div>
+                </div>
+
+                <div class="p-frame p2">
+                  <div class="p-photo"></div>
+                </div>
+
+                <div class="p-frame p3">
+                  <div class="p-photo person"></div>
+                </div>
+
+                <div class="p-frame p4">
+                  <div class="p-photo person"></div>
+                </div>
+
+                <div class="p-tape" style="left: 164px; top: 202px;"></div>
+                <div class="p-tape" style="left: 246px; top: 192px; transform: translateX(-50%) rotate(10deg);"></div>
+              </div>
+            </div>
+            <div class="feed-name">Polaroid Frames</div>
+            <div class="feed-meta">
+              <span class="meta-chip"><span>6</span><span class="meta-icon photo"></span></span>
+              <span class="meta-chip"><span>1</span><span class="meta-icon layers"></span></span>
+            </div>
+          </div>
+
+          <div class="feed-item">
+            <div class="feed-cover h520">
+              <div class="cover-ripped">
+                <div class="rip-top"></div>
+                <div class="summer-text">Summer vibe</div>
+                <div class="rip-mid"></div>
+                <div class="rip-bot"></div>
+              </div>
+            </div>
+            <div class="feed-name">Ripped Summer</div>
+            <div class="feed-meta">
+              <span class="meta-chip"><span>3</span><span class="meta-icon photo"></span></span>
+              <span class="meta-chip"><span>1</span><span class="meta-icon layers"></span></span>
+            </div>
+          </div>
+
+          <div class="feed-item">
+            <div class="feed-cover h420">
+              <div class="cover-scrap">
+                <div class="scrap-sea"></div>
+                <div class="scrap-polaroid sp1"><div class="scrap-img"></div></div>
+                <div class="scrap-polaroid sp2"><div class="scrap-img"></div></div>
+                <div class="scrap-polaroid sp3"><div class="scrap-img"></div></div>
+                <div class="scrap-polaroid sp4"><div class="scrap-img"></div></div>
+                <div class="scrap-note">Greece<br>2025</div>
+                <div class="scrap-dots"><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+            </div>
+            <div class="feed-name">Summer Scrapbook</div>
+            <div class="feed-meta">
+              <span class="meta-chip"><span>14</span><span class="meta-icon photo"></span></span>
+              <span class="meta-chip"><span>5</span><span class="meta-icon layers"></span></span>
+            </div>
+          </div>
+
+          <div class="feed-item">
+            <div class="feed-cover h420">
+              <div class="cover-paper">
+                <div class="paper-hole"></div>
+                <div class="summer-balls">
+                  <span>S</span><span>U</span><span>M</span><span>M</span><span>E</span><span>R</span>
+                </div>
+                <div class="paper-couple"></div>
+                <div class="scrap-dots" style="bottom: 14px;"><span></span><span></span><span></span></div>
+              </div>
+            </div>
+            <div class="feed-name">Summer Paper</div>
+            <div class="feed-meta">
+              <span class="meta-chip"><span>10</span><span class="meta-icon photo"></span></span>
+              <span class="meta-chip"><span>5</span><span class="meta-icon layers"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <div class="bottom-nav-wrap">
+      <div class="bottom-nav">
+        <div class="nav-primary">⌂</div>
+        <div class="nav-group">
+          <div class="nav-item active">✦</div>
+          <div class="nav-item">◌</div>
+          <div class="nav-item">◔</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">
+    中间模板区已改成参考图那种三重叠卡片样式，并加入左右切换。浏览器里可点击右上角箭头预览切换效果；导入 Figma 后主要用于视觉定稿，交互逻辑需要在 Flutter 里实现。
+  </div>
+
+  <script>
+    const cards = Array.from(document.querySelectorAll('.stack-card'));
+    const dotsWrap = document.getElementById('dots');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let current = 3;
+
+    function createDots() {
+      dotsWrap.innerHTML = '';
+      cards.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot-indicator' + (index === current ? ' active' : '');
+        dot.addEventListener('click', () => {
+          current = index;
+          render();
+        });
+        dotsWrap.appendChild(dot);
+      });
+    }
+
+    function render() {
+      cards.forEach((card, index) => {
+        const diff = (index - current + cards.length) % cards.length;
+        let pos = 99;
+        let hide = 'true';
+
+        if (diff === 0) {
+          pos = 0;
+          hide = 'false';
+        } else if (diff === 1) {
+          pos = 1;
+          hide = 'false';
+        } else if (diff === cards.length - 1) {
+          pos = -1;
+          hide = 'false';
+        }
+
+        card.setAttribute('data-pos', pos);
+        card.setAttribute('data-hide', hide);
+      });
+
+      Array.from(dotsWrap.children).forEach((dot, index) => {
+        dot.classList.toggle('active', index === current);
+      });
+    }
+
+    prevBtn.addEventListener('click', () => {
+      current = (current - 1 + cards.length) % cards.length;
+      render();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      current = (current + 1) % cards.length;
+      render();
+    });
+
+    let startX = 0;
+    const zone = document.getElementById('carousel');
+
+    zone.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    zone.addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const delta = endX - startX;
+      if (Math.abs(delta) > 40) {
+        if (delta < 0) {
+          current = (current + 1) % cards.length;
+        } else {
+          current = (current - 1 + cards.length) % cards.length;
+        }
+        render();
+      }
+    }, { passive: true });
+
+    createDots();
+    render();
+  </script>
+</body>
+</html>
